@@ -1,6 +1,8 @@
 use std::io::Cursor;
 use std::process::Command;
 
+use rocket::fairing::AdHoc;
+use rocket::State;
 use thiserror::Error;
 
 #[macro_use]
@@ -9,10 +11,29 @@ use rocket::http::ContentType;
 use rocket::http::Status;
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
+use rocket::serde::{Deserialize, Serialize};
 
 use git2::Repository;
 mod git_helper;
 use git_helper::*;
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+struct Config {
+    remote_name: String,
+    remote_branch: String,
+    site_directory: String,
+}
+
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            remote_name: String::from("origin"),
+            remote_branch: String::from("main"),
+            site_directory: String::from("/data/site"),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 enum AppError {
@@ -36,17 +57,15 @@ impl<'r> Responder<'r, 'static> for AppError {
 }
 
 #[get("/<_..>")]
-fn all() -> Result<String, AppError> {
-    let remote_name = "origin";
-    let remote_branch = "master";
+fn all(config: &State<Config>) -> Result<String, AppError> {
     let repo = Repository::open("/tmp/auie")?;
-    let mut remote = repo.find_remote(remote_name)?;
-    let fetch_commit = do_fetch(&repo, &[remote_branch], &mut remote)?;
-    do_merge(&repo, &remote_branch, fetch_commit)?;
+    let mut remote = repo.find_remote(&config.remote_name)?;
+    let fetch_commit = do_fetch(&repo, &[&config.remote_branch], &mut remote)?;
+    do_merge(&repo, &(config.remote_branch), fetch_commit)?;
 
     let result = Command::new("zola")
         .arg("build")
-        .current_dir("/tmp/auie/myblog")
+        .current_dir(&config.site_directory)
         .output()?;
 
     println!("Hooked");
@@ -55,5 +74,7 @@ fn all() -> Result<String, AppError> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![all])
+    rocket::build()
+        .attach(AdHoc::config::<Config>())
+        .mount("/", routes![all])
 }
