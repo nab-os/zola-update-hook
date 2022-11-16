@@ -1,17 +1,21 @@
 use std::io::Cursor;
 use std::process::Command;
 
-use rocket::fairing::AdHoc;
-use rocket::State;
 use thiserror::Error;
 
 #[macro_use]
 extern crate rocket;
+use figment::{
+    providers::{Env, Format, Serialized, Toml},
+    Figment, Profile,
+};
+use rocket::fairing::AdHoc;
 use rocket::http::ContentType;
 use rocket::http::Status;
 use rocket::request::Request;
 use rocket::response::{self, Responder, Response};
 use rocket::serde::{Deserialize, Serialize};
+use rocket::State;
 
 use git2::Repository;
 mod git_helper;
@@ -74,7 +78,13 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
+    let figment = Figment::from(rocket::Config::default())
+        .merge(Serialized::defaults(Config::default()))
+        .merge(Toml::file("App.toml").nested())
+        .merge(Env::prefixed("APP_").global())
+        .select(Profile::from_env_or("APP_PROFILE", "default"));
+
+    rocket::custom(figment)
         .attach(AdHoc::config::<Config>())
         .mount("/", routes![all])
 }
