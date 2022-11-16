@@ -70,7 +70,7 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
     let fetch_commit = do_fetch(&repo, &[&config.remote_branch], &mut remote)?;
     do_merge(&repo, &(config.remote_branch), fetch_commit)?;
 
-    let result = Command::new("zola")
+    let result = Command::new("hugo")
         .arg("build")
         .current_dir(&config.site_directory)
         .output()?;
