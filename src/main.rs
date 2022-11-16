@@ -71,7 +71,6 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
     do_merge(&repo, &(config.remote_branch), fetch_commit)?;
 
     let result = Command::new("hugo")
-        .arg("build")
         .current_dir(&config.site_directory)
         .output()?;
 
