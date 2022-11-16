@@ -62,7 +62,7 @@ impl<'r> Responder<'r, 'static> for AppError {
 
 #[get("/<_..>")]
 fn all(config: &State<Config>) -> Result<String, AppError> {
-    let repo = Repository::open("/tmp/auie")?;
+    let repo = Repository::open(&config.site_directory)?;
     let mut remote = repo.find_remote(&config.remote_name)?;
     let fetch_commit = do_fetch(&repo, &[&config.remote_branch], &mut remote)?;
     do_merge(&repo, &(config.remote_branch), fetch_commit)?;
