@@ -75,6 +75,7 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
         .current_dir(&config.site_directory)
         .output()?;
 
+    fs::remove_dir_all(&config.output_directory)?;
     fs::rename(
         Path::new(&config.site_directory).join("public"),
         &config.output_directory,
