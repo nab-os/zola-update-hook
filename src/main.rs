@@ -1,5 +1,6 @@
-use std::io::Cursor;
+use std::fs;
 use std::process::Command;
+use std::{io::Cursor, path::Path};
 
 use thiserror::Error;
 
@@ -27,6 +28,7 @@ struct Config {
     remote_name: String,
     remote_branch: String,
     site_directory: String,
+    output_directory: String,
 }
 
 impl Default for Config {
@@ -35,6 +37,7 @@ impl Default for Config {
             remote_name: String::from("origin"),
             remote_branch: String::from("main"),
             site_directory: String::from("/data/site"),
+            output_directory: String::from("/var/www/html"),
         }
     }
 }
@@ -71,6 +74,11 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
         .arg("build")
         .current_dir(&config.site_directory)
         .output()?;
+
+    fs::copy(
+        Path::new(&config.site_directory).join("/public"),
+        &config.output_directory,
+    )?;
 
     println!("Hooked");
     Ok(String::from_utf8(result.stdout).unwrap())
