@@ -76,7 +76,7 @@ fn all(config: &State<Config>) -> Result<String, AppError> {
         .output()?;
 
     fs::rename(
-        Path::new(&config.site_directory).join("/public"),
+        Path::new(&config.site_directory).join("public"),
         &config.output_directory,
     )?;
 
