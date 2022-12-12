@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+copy_dir = "0.1.2"
 figment = "0.10.8"
 git2 = "0.15.0"
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
